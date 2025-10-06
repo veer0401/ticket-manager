@@ -3,133 +3,102 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fast QR Scanner</title>
+<title>Ticket Scanner - Optimized</title>
 <style>
 :root {
-  --primary:#6a1b9a; --secondary:#00bcd4;
+  --primary:#6a1b9a; --primary-dark:#4a148c;
   --dark-bg:#121212; --dark-card:#252525; --text-primary:#fff;
-  --text-secondary:#b0b0b0; --success:#4caf50; --error:#f44336; --info:#2196f3;
+  --success:#4caf50; --error:#f44336;
 }
-body{margin:0;font-family:Poppins,sans-serif;background:var(--dark-bg);color:var(--text-primary);}
-.container{max-width:480px;margin:20px auto;}
+body{margin:0;padding:0;font-family:'Poppins',sans-serif;background:var(--dark-bg);color:var(--text-primary);}
+.container{max-width:600px;margin:20px auto;padding:10px;}
 header{text-align:center;margin-bottom:20px;}
-h1{background:linear-gradient(90deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.scanner-card{background:var(--dark-card);border-radius:12px;padding:10px;text-align:center;position:relative;}
-#video{width:100%;border-radius:12px;}
-#overlay{position:absolute;top:0;left:0;width:100%;height:100%;border:4px solid var(--secondary);border-radius:12px;box-shadow:0 0 20px var(--secondary);pointer-events:none;}
-.status{margin-top:10px;font-weight:bold;padding:8px;border-radius:8px;text-align:center;}
-.status-info{background:rgba(33,150,243,0.2);color:var(--info);border:1px solid rgba(33,150,243,0.3);}
-.status-success{background:rgba(76,175,80,0.2);color:var(--success);border:1px solid rgba(76,175,80,0.3);}
-.status-error{background:rgba(244,67,54,0.2);color:var(--error);border:1px solid rgba(244,67,54,0.3);}
-.stats{display:flex;justify-content:space-around;margin-top:15px;}
-.stat-card{background:var(--dark-card);padding:8px 10px;border-radius:8px;text-align:center;}
-.stat-value{font-size:1.4rem;background:linear-gradient(90deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+h1{font-size:2rem;color:var(--primary);}
+video{width:100%;border-radius:12px;background:#000;}
+.btn{padding:10px 20px;border:none;border-radius:8px;background:var(--primary);color:#fff;cursor:pointer;margin:5px;}
+.status{margin-top:10px;font-weight:500;text-align:center;}
+.status-success{color:var(--success);}
+.status-error{color:var(--error);}
+.controls{display:flex;justify-content:center;gap:10px;margin-top:10px;}
 </style>
 </head>
 <body>
 
 <div class="container">
   <header>
-    <h1>🎟️ Fast Ticket Scanner</h1>
-    <p style="color:var(--text-secondary)">Scan tickets instantly</p>
+    <h1>🎫 Ticket Scanner</h1>
   </header>
 
-  <div class="scanner-card">
-    <video id="video" autoplay muted playsinline></video>
-    <div id="overlay"></div>
-    <div id="status" class="status status-info">Scanning...</div>
+  <video id="camera" autoplay playsinline></video>
+  
+  <div class="controls">
+    <button class="btn" id="scanBtn">Scan Ticket</button>
+    <button class="btn" id="flashBtn">🔦 Toggle Flash</button>
   </div>
 
-  <div class="stats">
-    <div class="stat-card">
-      <div class="stat-value" id="totalTickets">0</div>
-      <div style="color:var(--text-secondary)">Total Tickets</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value" id="scannedTickets">0</div>
-      <div style="color:var(--text-secondary)">Scanned</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value" id="remainingTickets">0</div>
-      <div style="color:var(--text-secondary)">Remaining</div>
-    </div>
-  </div>
+  <div id="status" class="status">Camera initializing...</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
 <script>
-// Audio Feedback
-const successAudio=new Audio('https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg');
-const errorAudio=new Audio('https://actions.google.com/sounds/v1/cartoon/boing.ogg');
+let video = document.getElementById('camera');
+let canvas = document.createElement('canvas');
+let ctx = canvas.getContext('2d');
+let stream;
+let track;
+let torchOn = false;
 
-// Tickets from localStorage
-let tickets=JSON.parse(localStorage.getItem('tickets'))||[];
-updateStats();
+// Initialize camera
+async function initCamera(){
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+    video.srcObject = stream;
+    track = stream.getVideoTracks()[0];
+    document.getElementById('status').textContent = 'Camera ready. Press "Scan Ticket"';
+  } catch(e){
+    document.getElementById('status').textContent = 'Camera access denied or not supported.';
+  }
+}
+initCamera();
 
-const video=document.getElementById('video');
-const statusDiv=document.getElementById('status');
-let scanning=true;
-
-// Start camera
-navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}}})
-.then(stream=>{video.srcObject=stream; video.play(); requestAnimationFrame(scanQR);})
-.catch(()=>{statusDiv.textContent="Camera access denied!"; statusDiv.className="status status-error";});
-
-// Optimized QR scanning
-function scanQR(){
-  if(!scanning){ requestAnimationFrame(scanQR); return; }
-  if(video.readyState!==video.HAVE_ENOUGH_DATA){ requestAnimationFrame(scanQR); return; }
-
-  // Low-res central crop for speed
-  const canvas=document.createElement('canvas');
-  const width=200, height=200;
-  canvas.width=width; canvas.height=height;
-  const ctx=canvas.getContext('2d');
-  const sx=(video.videoWidth-width)/2, sy=(video.videoHeight-height)/2;
-  ctx.drawImage(video,sx,sy,width,height,0,0,width,height);
-  const imageData=ctx.getImageData(0,0,width,height);
-  const code=jsQR(imageData.data,width,height,{inversionAttempts:"dontInvert"});
-
+// Scan QR on button click
+document.getElementById('scanBtn').addEventListener('click', ()=>{
+  if(!stream) return;
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video,0,0,canvas.width,canvas.height);
+  const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+  const code = jsQR(imageData.data, canvas.width, canvas.height);
+  
+  const status = document.getElementById('status');
   if(code){
-    const id=code.data.trim();
-    const existing=tickets.find(t=>t.id===id);
-    if(existing && existing.used){ showError(`Ticket ${id} already used!`); }
-    else{
-      if(existing) existing.used=true;
-      else tickets.push({id:id, used:true});
-      localStorage.setItem('tickets',JSON.stringify(tickets));
-      showSuccess(`Ticket ${id} ✅`);
-    }
-  } else { requestAnimationFrame(scanQR); }
-}
+    status.textContent = `Ticket Scanned: ${code.data}`;
+    status.className='status status-success';
+    navigator.vibrate?.(200);
+    new Audio('https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg').play();
+  } else {
+    status.textContent = 'No QR detected!';
+    status.className='status status-error';
+    navigator.vibrate?.([100,50,100]);
+    new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg').play();
+  }
+});
 
-// Handlers
-function showSuccess(msg){
-  scanning=false;
-  statusDiv.textContent=msg; statusDiv.className='status status-success';
-  if(navigator.vibrate) navigator.vibrate([100,50,100]);
-  successAudio.play();
-  setTimeout(()=>{ scanning=true; statusDiv.textContent="Scanning..."; statusDiv.className='status status-info'; updateStats(); requestAnimationFrame(scanQR); },500);
-}
-
-function showError(msg){
-  scanning=false;
-  statusDiv.textContent=msg; statusDiv.className='status status-error';
-  if(navigator.vibrate) navigator.vibrate([200,50,50]);
-  errorAudio.play();
-  setTimeout(()=>{ scanning=true; statusDiv.textContent="Scanning..."; statusDiv.className='status status-info'; requestAnimationFrame(scanQR); },500);
-}
-
-// Stats
-function updateStats(){
-  const total=tickets.length;
-  const scanned=tickets.filter(t=>t.used).length;
-  const remaining=total-scanned;
-  document.getElementById('totalTickets').textContent=total;
-  document.getElementById('scannedTickets').textContent=scanned;
-  document.getElementById('remainingTickets').textContent=remaining;
-}
+// Toggle flashlight
+document.getElementById('flashBtn').addEventListener('click', async ()=>{
+  if(!track) return;
+  const capabilities = track.getCapabilities();
+  if(!capabilities.torch){
+    alert('Flash not supported on this device.');
+    return;
+  }
+  torchOn = !torchOn;
+  try{
+    await track.applyConstraints({advanced:[{torch:torchOn}]});
+  }catch(e){
+    console.log(e);
+  }
+});
 </script>
-
 </body>
 </html>
