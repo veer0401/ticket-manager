@@ -17,316 +17,56 @@
   --text-secondary: #b0b0b0;
   --success: #4caf50;
   --error: #f44336;
-  --warning: #ff9800;
   --info: #2196f3;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Poppins', sans-serif; background: var(--dark-bg); color: var(--text-primary); min-height: 100vh; line-height: 1.6; }
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
-body {
-  font-family: 'Poppins', sans-serif;
-  background: var(--dark-bg);
-  color: var(--text-primary);
-  min-height: 100vh;
-  line-height: 1.6;
-}
+header { text-align:center; margin-bottom:30px; padding-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.1); }
+h1 { font-size:2.5rem; background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow:0 0 10px rgba(106,27,154,0.3); margin-bottom:10px; }
+.subtitle { color: var(--text-secondary); font-size:1rem; margin-bottom:20px; }
+nav { display:flex; justify-content:center; flex-wrap:wrap; gap:15px; margin-bottom:20px; }
+.nav-btn { display:inline-flex; align-items:center; padding:10px 20px; background: var(--dark-card); color: var(--text-primary); text-decoration:none; border-radius:8px; font-weight:500; transition: all 0.3s ease; border:1px solid rgba(255,255,255,0.1); box-shadow:0 4px 6px rgba(0,0,0,0.1);}
+.nav-btn:hover { background: var(--primary); transform: translateY(-2px); box-shadow:0 6px 12px rgba(106,27,154,0.3);}
+.nav-btn.active { background: var(--primary); box-shadow:0 0 15px rgba(106,27,154,0.5); }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
+.card { background: var(--dark-card); border-radius:12px; padding:25px; margin-bottom:25px; box-shadow:0 8px 16px rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.05); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.card:hover { transform: translateY(-5px); box-shadow:0 12px 24px rgba(0,0,0,0.3); }
+.card-header { margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center; }
+.card-title { font-size:1.5rem; color: var(--text-primary); display:flex; align-items:center; gap:10px; }
 
-/* Header & Navigation */
-header {
-  text-align: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
+.upload-area { border:2px dashed rgba(255,255,255,0.2); border-radius:12px; padding:40px 20px; text-align:center; transition: all 0.3s ease; background: rgba(255,255,255,0.02); cursor:pointer; margin-bottom:20px; position: relative; }
+.upload-area.dragover { border-color: var(--primary); background: rgba(106,27,154,0.1); }
+.upload-icon { font-size:3rem; margin-bottom:15px; color: var(--secondary); }
+.upload-text h3 { margin-bottom:5px; }
+.upload-hint { font-size:0.9rem; color: var(--text-secondary); }
+.file-input { position:absolute; left:-9999px; }
 
-h1 {
-  color: var(--text-primary);
-  margin-bottom: 10px;
-  font-size: 2.5rem;
-  background: linear-gradient(90deg, var(--primary), var(--secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 10px rgba(106, 27, 154, 0.3);
-}
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 24px; border:none; border-radius:8px; background: var(--primary); color: var(--text-primary); font-weight:500; cursor:pointer; transition: all 0.3s ease; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+.btn:hover { background: var(--primary-dark); transform:translateY(-2px); box-shadow:0 6px 12px rgba(106,27,154,0.3);}
+.btn-secondary { background: var(--secondary); }
+.btn-secondary:hover { background: var(--secondary-dark); }
+.btn-group { display:flex; flex-wrap:wrap; gap:10px; margin-top:20px; }
 
-.subtitle {
-  color: var(--text-secondary);
-  font-size: 1rem;
-  margin-bottom: 20px;
-}
+.status { margin-top:10px; font-weight:bold; text-align:center; padding:10px; border-radius:8px; }
+.status-success { background: rgba(76,175,80,0.2); color: var(--success); border:1px solid rgba(76,175,80,0.3);}
+.status-error { background: rgba(244,67,54,0.2); color: var(--error); border:1px solid rgba(244,67,54,0.3);}
+.status-info { background: rgba(33,150,243,0.2); color: var(--info); border:1px solid rgba(33,150,243,0.3); }
 
-nav {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 20px;
-}
+.preview-table { margin-top:20px; max-height:300px; overflow-y:auto; }
+.preview-table table { width:100%; border-collapse:collapse; background: var(--dark-surface); }
+.preview-table th, .preview-table td { padding:12px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.1);}
+.preview-table th { background: var(--dark-card); color: var(--text-primary); font-weight:600; position:sticky; top:0;}
+.preview-table tr:hover { background: rgba(255,255,255,0.05); }
 
-.nav-btn {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 20px;
-  background: var(--dark-card);
-  color: var(--text-primary);
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.nav-btn:hover {
-  background: var(--primary);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(106, 27, 154, 0.3);
-}
-
-.nav-btn.active {
-  background: var(--primary);
-  box-shadow: 0 0 15px rgba(106, 27, 154, 0.5);
-}
-
-/* Cards */
-.card {
-  background: var(--dark-card);
-  border-radius: 12px;
-  padding: 25px;
-  margin-bottom: 25px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
-}
-
-.card-header {
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.card-title {
-  font-size: 1.5rem;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Form Elements */
-.form-group {
-  margin-bottom: 20px;
-}
-
-label {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-input, select {
-  width: 100%;
-  padding: 12px 15px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: var(--dark-surface);
-  color: var(--text-primary);
-  font-family: 'Poppins', sans-serif;
-  transition: all 0.3s ease;
-}
-
-input:focus, select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(106, 27, 154, 0.3);
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  background: var(--primary);
-  color: var(--text-primary);
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.btn:hover {
-  background: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(106, 27, 154, 0.3);
-}
-
-.btn-secondary {
-  background: var(--secondary);
-}
-
-.btn-secondary:hover {
-  background: var(--secondary-dark);
-}
-
-.btn-danger {
-  background: var(--error);
-}
-
-.btn-danger:hover {
-  background: #d32f2f;
-}
-
-.btn-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-/* Upload Area */
-.upload-area {
-  border: 2px dashed rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  padding: 40px 20px;
-  text-align: center;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.02);
-  cursor: pointer;
-  margin-bottom: 20px;
-}
-
-.upload-area:hover {
-  border-color: var(--secondary);
-  background: rgba(0, 188, 212, 0.05);
-}
-
-.upload-area.dragover {
-  border-color: var(--primary);
-  background: rgba(106, 27, 154, 0.1);
-}
-
-.upload-icon {
-  font-size: 3rem;
-  margin-bottom: 15px;
-  color: var(--secondary);
-}
-
-.upload-text {
-  margin-bottom: 15px;
-}
-
-.upload-hint {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-
-.file-input {
-  display: none;
-}
-
-/* Status */
-.status {
-  margin-top: 10px;
-  font-weight: bold;
-  text-align: center;
-  padding: 10px;
-  border-radius: 8px;
-}
-
-.status-success {
-  background: rgba(76, 175, 80, 0.2);
-  color: var(--success);
-  border: 1px solid rgba(76, 175, 80, 0.3);
-}
-
-.status-error {
-  background: rgba(244, 67, 54, 0.2);
-  color: var(--error);
-  border: 1px solid rgba(244, 67, 54, 0.3);
-}
-
-.status-info {
-  background: rgba(33, 150, 243, 0.2);
-  color: var(--info);
-  border: 1px solid rgba(33, 150, 243, 0.3);
-}
-
-/* Preview Table */
-.preview-table {
-  margin-top: 20px;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.preview-table table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--dark-surface);
-}
-
-.preview-table th, .preview-table td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.preview-table th {
-  background: var(--dark-card);
-  color: var(--text-primary);
-  font-weight: 600;
-  position: sticky;
-  top: 0;
-}
-
-.preview-table tr:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .container {
-    padding: 15px;
-  }
-  
-  h1 {
-    font-size: 2rem;
-  }
-  
-  .card {
-    padding: 20px;
-  }
-  
-  .btn-group {
-    flex-direction: column;
-  }
-  
-  .btn {
-    width: 100%;
-  }
+@media(max-width:768px) {
+  .container { padding:15px; }
+  h1 { font-size:2rem; }
+  .card { padding:20px; }
+  .btn-group { flex-direction:column; }
+  .btn { width:100%; }
 }
 </style>
 </head>
@@ -334,7 +74,7 @@ input:focus, select:focus {
 <div class="container">
   <header>
     <h1>🎟️ Ticket Manager</h1>
-    <p class="subtitle">Modern QR-based ticket management with real-time scanning</p>
+    <p class="subtitle">Upload tickets CSV</p>
     <nav>
       <a href="index.html" class="nav-btn">📷 Scan Tickets</a>
       <a href="ticket_generator.html" class="nav-btn">🎟️ Generate Tickets</a>
@@ -344,17 +84,15 @@ input:focus, select:focus {
   </header>
 
   <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">Upload Tickets CSV</h2>
-    </div>
+    <div class="card-header"><h2 class="card-title">Upload Tickets CSV</h2></div>
     
     <div class="upload-area" id="uploadArea">
       <div class="upload-icon">📁</div>
       <div class="upload-text">
-        <h3>Drop your CSV file here or click to browse</h3>
-        <p class="upload-hint">Supported format: CSV with columns: Ticket ID, Event Name, Timestamp, Used</p>
+        <h3>Drop CSV here or tap to select</h3>
+        <p class="upload-hint">Supported: CSV with Ticket ID, Event Name, Timestamp, Used</p>
       </div>
-      <input type="file" id="csvFile" class="file-input" accept=".csv">
+      <input type="file" id="csvFile" class="file-input" accept=".csv,text/csv">
     </div>
     
     <div class="btn-group">
@@ -364,175 +102,90 @@ input:focus, select:focus {
     
     <div id="status" class="status"></div>
     
-    <div id="preview" class="preview-table" style="display: none;">
+    <div id="preview" class="preview-table" style="display:none;">
       <h3>Preview (First 10 rows)</h3>
       <table>
         <thead>
-          <tr>
-            <th>Ticket ID</th>
-            <th>Event Name</th>
-            <th>Timestamp</th>
-            <th>Used</th>
-          </tr>
+          <tr><th>Ticket ID</th><th>Event Name</th><th>Timestamp</th><th>Used</th></tr>
         </thead>
         <tbody id="previewTableBody"></tbody>
       </table>
-    </div>
-  </div>
-  
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">CSV Format Instructions</h2>
-    </div>
-    
-    <div class="card-content">
-      <p>Your CSV file should have the following columns:</p>
-      <ul style="margin: 15px 0; padding-left: 20px;">
-        <li><strong>Ticket ID</strong> - Unique identifier for each ticket</li>
-        <li><strong>Event Name</strong> - Name of the event (optional)</li>
-        <li><strong>Timestamp</strong> - Creation date/time of the ticket</li>
-        <li><strong>Used</strong> - true/false indicating if ticket has been scanned</li>
-      </ul>
-      <p><strong>Example:</strong></p>
-      <pre style="background: var(--dark-surface); padding: 15px; border-radius: 8px; overflow-x: auto;">
-Ticket ID,Event Name,Timestamp,Used
-EVENT-12345,Summer Festival,2023-07-15 14:30:00,false
-EVENT-12346,Summer Festival,2023-07-15 14:30:00,true
-EVENT-12347,Concert Night,2023-08-20 19:00:00,false
-      </pre>
     </div>
   </div>
 </div>
 
 <script>
 let csvData = null;
-
-// Setup drag and drop
 const uploadArea = document.getElementById('uploadArea');
 const fileInput = document.getElementById('csvFile');
 
-uploadArea.addEventListener('click', () => {
-  fileInput.click();
-});
+// Tap to open file picker (works on mobile)
+uploadArea.addEventListener('click', ()=> fileInput.click());
 
-uploadArea.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  uploadArea.classList.add('dragover');
-});
-
-uploadArea.addEventListener('dragleave', () => {
-  uploadArea.classList.remove('dragover');
-});
-
-uploadArea.addEventListener('drop', (e) => {
+// Drag & drop for desktop
+uploadArea.addEventListener('dragover', e=>{ e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea.addEventListener('dragleave', ()=> uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', e=> {
   e.preventDefault();
   uploadArea.classList.remove('dragover');
-  
-  if (e.dataTransfer.files.length) {
-    fileInput.files = e.dataTransfer.files;
-    readCSVFile(e.dataTransfer.files[0]);
-  }
+  if(e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; readCSVFile(e.dataTransfer.files[0]); }
 });
 
-fileInput.addEventListener('change', (e) => {
-  if (e.target.files.length) {
-    readCSVFile(e.target.files[0]);
-  }
-});
+fileInput.addEventListener('change', e=> { if(e.target.files.length) readCSVFile(e.target.files[0]); });
 
-function readCSVFile(file) {
+function readCSVFile(file){
   const reader = new FileReader();
-  
-  reader.onload = function(e) {
+  reader.onload = e=>{
     const text = e.target.result;
     csvData = text;
-    
-    // Parse and preview
-    const lines = text.split(/\r?\n/).slice(0, 11); // First 10 data rows + header
+    const lines = text.split(/\r?\n/).slice(0,11);
     const previewTableBody = document.getElementById('previewTableBody');
     previewTableBody.innerHTML = '';
-    
-    // Skip header row for preview
-    for (let i = 1; i < lines.length && i < 11; i++) {
-      const line = lines[i];
-      if (!line.trim()) continue;
-      
-      const [id, eventName, timestamp, used] = line.split(',');
+    for(let i=1;i<lines.length;i++){
+      const line = lines[i]; if(!line.trim()) continue;
+      const [id,eventName,timestamp,used] = line.split(',');
       const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${id || ''}</td>
-        <td>${eventName || ''}</td>
-        <td>${timestamp || ''}</td>
-        <td>${used || 'false'}</td>
-      `;
+      row.innerHTML=`<td>${id||''}</td><td>${eventName||''}</td><td>${timestamp||''}</td><td>${used||'false'}</td>`;
       previewTableBody.appendChild(row);
     }
-    
-    document.getElementById('preview').style.display = 'block';
-    document.getElementById('status').textContent = `Ready to upload ${lines.length - 1} tickets`;
-    document.getElementById('status').className = 'status status-info';
+    document.getElementById('preview').style.display='block';
+    document.getElementById('status').textContent=`Ready to upload ${lines.length-1} tickets`;
+    document.getElementById('status').className='status status-info';
   };
-  
   reader.readAsText(file);
 }
 
-function uploadCSV() {
-  if (!csvData) {
-    document.getElementById('status').textContent = 'Please select a CSV file first!';
-    document.getElementById('status').className = 'status status-error';
-    return;
-  }
-  
-  const lines = csvData.split(/\r?\n/).slice(1); // skip header
+function uploadCSV(){
+  if(!csvData){ document.getElementById('status').textContent='Select a CSV first!'; document.getElementById('status').className='status status-error'; return; }
+  const lines = csvData.split(/\r?\n/).slice(1);
   let tickets = JSON.parse(localStorage.getItem('tickets')) || [];
-  let importedCount = 0;
-
-  lines.forEach(line => {
-    if (!line.trim()) return;
-    
-    const [id, eventName, timestamp, used] = line.split(',');
-    if (id) {
-      // Check if ticket already exists
-      const existingTicket = tickets.find(t => t.id === id);
-      if (!existingTicket) {
-        tickets.push({
-          id, 
-          eventName: eventName || '', 
-          timestamp: timestamp || new Date().toLocaleString(), 
-          used: used === 'true'
-        });
-        importedCount++;
-      }
+  let importedCount=0;
+  lines.forEach(line=>{
+    if(!line.trim()) return;
+    const [id,eventName,timestamp,used]=line.split(',');
+    if(id && !tickets.find(t=>t.id===id)){
+      tickets.push({ id, eventName:eventName||'', timestamp:timestamp||new Date().toLocaleString(), used:used==='true' });
+      importedCount++;
     }
   });
-
   localStorage.setItem('tickets', JSON.stringify(tickets));
-  document.getElementById('status').textContent = `${importedCount} tickets imported successfully! Total tickets: ${tickets.length}`;
-  document.getElementById('status').className = 'status status-success';
-  
-  // Reset form
-  fileInput.value = '';
-  csvData = null;
-  document.getElementById('preview').style.display = 'none';
+  document.getElementById('status').textContent=`${importedCount} tickets imported! Total: ${tickets.length}`;
+  document.getElementById('status').className='status status-success';
+  fileInput.value=''; csvData=null; document.getElementById('preview').style.display='none';
 }
 
-function downloadTemplate() {
-  const template = `Ticket ID,Event Name,Timestamp,Used
+function downloadTemplate(){
+  const template=`Ticket ID,Event Name,Timestamp,Used
 EVENT-001,Summer Festival,2023-07-15 14:30:00,false
 EVENT-002,Summer Festival,2023-07-15 14:30:00,false
 EVENT-003,Concert Night,2023-08-20 19:00:00,false
 EVENT-004,Concert Night,2023-08-20 19:00:00,true`;
-  
-  const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob([template], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = 'ticket_template.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-  
-  document.getElementById('status').textContent = 'Template downloaded successfully!';
-  document.getElementById('status').className = 'status status-success';
+  a.href=url; a.download='ticket_template.csv'; a.click(); URL.revokeObjectURL(url);
+  document.getElementById('status').textContent='Template downloaded successfully!';
+  document.getElementById('status').className='status status-success';
 }
 </script>
 </body>
