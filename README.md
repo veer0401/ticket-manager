@@ -1,16 +1,33 @@
-
-## README.md
+# Updated README.md with Screenshots Section
 
 # 🎟️ Ticket Manager
 
 A modern, mobile-responsive QR-based ticket management system with real-time scanning capabilities. Built with pure HTML, CSS, and JavaScript.
 
-![Tech Ticket System](https://img.shields.io/badge/Version-1.0.0-purple)
+![Ticket Manager](https://img.shields.io/badge/Version-1.0.0-purple)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Mobile](https://img.shields.io/badge/Mobile-Responsive-blue)
 
-## ✨ Features
+## 📸 Screenshots
 
+### 🎯 Scanner Interface
+<img width="600" alt="QR Scanner Interface" src="https://github.com/user-attachments/assets/297c0e66-bbd9-4423-89c3-fa58398d550e" />
+*Real-time QR code scanning with custom animated overlay and camera controls*
+
+### 🎟️ Ticket Generator
+<img width="600" alt="Ticket Generator" src="https://github.com/user-attachments/assets/929f18d3-ab3b-4535-9ad4-21319a9f75dc" />
+*Bulk ticket generation with QR code preview and multiple export options*
+
+### 📤 CSV Upload
+<img width="600" alt="CSV Upload Page" src="https://github.com/user-attachments/assets/43dafc6f-607d-4e2d-8e54-ca7b42514ec5" />
+*Drag & drop CSV upload with template download and data validation*
+
+### 📊 Analytics Dashboard
+<img width="600" alt="Analytics Dashboard" src="https://github.com/user-attachments/assets/69ec1a25-2598-4324-8045-5ad4c5559311" />
+*Comprehensive dashboard with real-time statistics and advanced filtering*
+
+
+## ✨ Features
 ### 🎯 Core Functionality
 - **QR Code Scanner** - Real-time ticket validation with custom scanner UI
 - **Bulk Ticket Generation** - Create thousands of tickets with unique QR codes
@@ -39,21 +56,23 @@ A modern, mobile-responsive QR-based ticket management system with real-time sca
 ### Installation
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/tech-ticket-system.git
+git clone https://github.com/veer0401/ticket-manager.git
 ```
 
 2. Open `index.html` in your browser:
 ```bash
-cd tech-ticket-system
+cd ticket-manager
 open index.html
 ```
+
+**Live Demo**: [GitHub Pages](https://veer0401.github.io/ticket-manager/)
 
 That's it! The application runs entirely in the browser.
 
 ## 📁 File Structure
 
 ```
-tech-ticket-system/
+ticket-manager/
 ├── index.html              # Main scanner interface
 ├── ticket_generator.html   # Bulk ticket generation
 ├── upload_tickets.html     # CSV upload functionality
@@ -219,45 +238,49 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 For support and questions:
-- Open an [issue](https://github.com/yourusername/tech-ticket-system/issues)
+- Open an [issue](https://github.com/veer0401/ticket-manager/issues)
 - Check [troubleshooting](#troubleshooting) section
 - Review existing issues for solutions
 
+---
 
+**⭐ Star this repo if you find it helpful!**
 
-### LICENSE
-```text
-MIT License
-
-Copyright (c) 2024 Tech Ticket System
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+**Repository**: [https://github.com/veer0401/ticket-manager](https://github.com/veer0401/ticket-manager)
 ```
 
-This comprehensive README provides:
-- Clear project description and features
-- Easy setup instructions
-- Detailed usage guides
-- Mobile optimization highlights
-- Technical specifications
-- Troubleshooting guide
-- Contribution guidelines
-- Professional branding
+## Additional GitHub Repository Setup
 
-The repository is ready for GitHub with proper documentation, licensing, and organization!
+### Creating GitHub Pages (Optional)
+To deploy your ticket manager as a live demo:
+
+1. Go to your repository settings on GitHub
+2. Navigate to "Pages" in the sidebar
+3. Select "Deploy from a branch" 
+4. Choose "main" branch and "/ (root)" folder
+5. Click "Save"
+
+Your live demo will be available at: `https://veer0401.github.io/ticket-manager/`
+
+### Adding Actual Screenshots
+To replace the placeholder images with actual screenshots:
+
+1. Take screenshots of your application
+2. Save them in a `/screenshots` folder in your repository
+3. Update the image URLs in the README to point to your actual screenshots
+
+Example:
+```markdown
+![Scanner Page](./screenshots/scanner-desktop.png)
+![Mobile View](./screenshots/scanner-mobile.png)
+```
+
+### Repository Topics
+Add these topics to your GitHub repository for better discoverability:
+- `qr-scanner`
+- `ticket-management`
+- `event-management`
+- `javascript`
+- `html5`
+- `mobile-responsive`
+- `progressive-web-app`
