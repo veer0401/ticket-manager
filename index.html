@@ -3,49 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ticket Manager - Scanner</title>
+<title>Ticket Scanner</title>
 <script type="module">
-  import { BrowserMultiFormatReader, NotFoundException } from 'https://cdn.jsdelivr.net/npm/@zxing/library@0.19.0/esm/index.min.js';
-
-  window.ZXing = { BrowserMultiFormatReader, NotFoundException };
+  import { BrowserMultiFormatReader } from 'https://cdn.jsdelivr.net/npm/@zxing/library@0.19.0/esm/index.min.js';
+  window.ZXing = { BrowserMultiFormatReader };
 </script>
 <style>
 :root {
-  --primary: #6a1b9a;
-  --primary-dark: #4a148c;
-  --secondary: #00bcd4;
-  --secondary-dark: #008ba3;
-  --dark-bg: #121212;
-  --dark-surface: #1e1e1e;
-  --dark-card: #252525;
-  --text-primary: #ffffff;
-  --text-secondary: #b0b0b0;
-  --success: #4caf50;
-  --error: #f44336;
+  --primary: #6a1b9a; --primary-dark: #4a148c;
+  --secondary: #00bcd4; --secondary-dark: #008ba3;
+  --dark-bg: #121212; --dark-card: #252525;
+  --text-primary: #fff; --text-secondary: #b0b0b0;
+  --success: #4caf50; --error: #f44336;
 }
-
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Poppins',sans-serif; background:var(--dark-bg); color:var(--text-primary); min-height:100vh; }
-.container { max-width: 900px; margin: 0 auto; padding: 20px; }
+body { font-family:'Poppins',sans-serif; background:var(--dark-bg); color:var(--text-primary); margin:0; }
+.container { max-width: 900px; margin: 20px auto; padding: 10px; }
 header { text-align:center; margin-bottom:20px; }
-h1 { font-size:2rem; background: linear-gradient(90deg,var(--primary),var(--secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-.subtitle { color:var(--text-secondary); font-size:0.9rem; margin-bottom:20px; }
-.nav-btn { display:inline-block; margin:5px; padding:10px 20px; border-radius:8px; background:var(--dark-card); color:var(--text-primary); text-decoration:none; }
-.nav-btn.active { background:var(--primary); }
-
-.card { background:var(--dark-card); border-radius:12px; padding:20px; margin-bottom:20px; }
-.card-header { margin-bottom:15px; font-size:1.2rem; font-weight:600; }
-.video-container { position: relative; width:100%; max-width:500px; margin:0 auto; }
-#video { width:100%; border-radius:12px; }
-.controls { display:flex; justify-content:space-between; margin-top:10px; }
+h1 { font-size:2rem; background:linear-gradient(90deg,var(--primary),var(--secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.subtitle { color:var(--text-secondary); font-size:0.9rem; }
+.card { background:var(--dark-card); border-radius:12px; padding:20px; margin-bottom:20px; text-align:center; }
+video { width:100%; max-width:500px; border-radius:12px; }
+.controls { display:flex; justify-content:center; gap:10px; margin-top:10px; flex-wrap:wrap; }
 .btn { padding:10px 20px; border:none; border-radius:8px; background:var(--primary); color:#fff; cursor:pointer; }
 .btn:hover { background:var(--primary-dark); }
-.status { margin-top:10px; text-align:center; font-weight:500; }
-.status-success { color:var(--success);}
-.status-error { color:var(--error);}
-input[type=file] { display:none; }
 .flash-btn { background:var(--secondary); }
 .flash-btn:hover { background:var(--secondary-dark); }
+.status { margin-top:10px; font-weight:500; }
+.status-success { color:var(--success);}
+.status-error { color:var(--error);}
+input[type=file]{display:none;}
 </style>
 </head>
 <body>
@@ -53,19 +39,10 @@ input[type=file] { display:none; }
   <header>
     <h1>🎟️ Ticket Scanner</h1>
     <p class="subtitle">Scan tickets via camera or upload QR image</p>
-    <nav>
-      <a href="index.html" class="nav-btn active">📷 Scan Tickets</a>
-      <a href="ticket_generator.html" class="nav-btn">🎟️ Generate Tickets</a>
-      <a href="upload_tickets.html" class="nav-btn">📤 Upload CSV</a>
-      <a href="entries.html" class="nav-btn">📊 Entry Dashboard</a>
-    </nav>
   </header>
 
   <div class="card">
-    <div class="card-header">Live Camera Scanner</div>
-    <div class="video-container">
-      <video id="video" autoplay playsinline></video>
-    </div>
+    <video id="video" autoplay playsinline></video>
     <div class="controls">
       <button class="btn flash-btn" id="toggleFlash">Toggle Flashlight</button>
       <button class="btn" id="scanImageBtn">Scan QR Image</button>
@@ -79,51 +56,43 @@ input[type=file] { display:none; }
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 
 <script type="module">
-const { BrowserMultiFormatReader, NotFoundException } = window.ZXing;
+const { BrowserMultiFormatReader } = window.ZXing;
 const codeReader = new BrowserMultiFormatReader();
-const videoElement = document.getElementById('video');
+const video = document.getElementById('video');
 const statusEl = document.getElementById('status');
 const successSound = document.getElementById('successSound');
 const errorSound = document.getElementById('errorSound');
-let selectedDeviceId = null;
 let torchOn = false;
-
-// Get cameras and start scanning
-navigator.mediaDevices.enumerateDevices().then(devices => {
-  const videoInput = devices.filter(d => d.kind === 'videoinput');
-  if(videoInput.length) selectedDeviceId = videoInput[0].deviceId;
-  startCamera();
-});
+let currentStream = null;
 
 async function startCamera() {
   try {
-    await codeReader.decodeFromVideoDevice(selectedDeviceId, videoElement, (result, err) => {
-      if (result) {
-        handleScan(result.text);
-      }
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = stream;
+    currentStream = stream;
+    codeReader.decodeFromVideoDevice(null, video, (result, err) => {
+      if(result) handleScan(result.text);
     });
   } catch(e) {
     console.error(e);
-    statusEl.textContent = "Camera access denied or not available.";
+    statusEl.textContent = "Camera not available or permission denied.";
   }
 }
+
+startCamera();
 
 function handleScan(qrText) {
   const tickets = JSON.parse(localStorage.getItem('tickets')) || [];
   const ticket = tickets.find(t => t.id === qrText);
-  if(ticket) {
-    if(ticket.used){
-      showStatus('Ticket already used!', false);
-    } else {
+  if(ticket){
+    if(ticket.used) showStatus('Ticket already used!', false);
+    else {
       ticket.used = true;
       localStorage.setItem('tickets', JSON.stringify(tickets));
       showStatus('✅ Ticket valid! Entry allowed.', true);
       vibrate(100);
     }
-  } else {
-    showStatus('❌ Ticket not found!', false);
-    vibrate(300);
-  }
+  } else showStatus('❌ Ticket not found!', false);
 }
 
 function showStatus(msg, success){
@@ -132,38 +101,34 @@ function showStatus(msg, success){
   (success ? successSound : errorSound).play();
 }
 
-function vibrate(duration){
-  if(navigator.vibrate) navigator.vibrate(duration);
-}
+function vibrate(ms){ if(navigator.vibrate) navigator.vibrate(ms); }
 
-// Flashlight toggle
-document.getElementById('toggleFlash').addEventListener('click', async () => {
-  if(!videoElement.srcObject) return;
-  const track = videoElement.srcObject.getVideoTracks()[0];
-  const capabilities = track.getCapabilities();
-  if(!capabilities.torch) {
-    alert("Torch not supported on this device");
-    return;
-  }
+// Flashlight
+document.getElementById('toggleFlash').addEventListener('click', async ()=>{
+  if(!currentStream) return;
+  const track = currentStream.getVideoTracks()[0];
+  if(!track.getCapabilities().torch) { alert("Torch not supported"); return; }
   torchOn = !torchOn;
   await track.applyConstraints({ advanced: [{ torch: torchOn }] });
 });
 
 // Scan QR from image
-document.getElementById('scanImageBtn').addEventListener('click', () => {
-  document.getElementById('imageInput').click();
-});
-
-document.getElementById('imageInput').addEventListener('change', (e) => {
+document.getElementById('scanImageBtn').addEventListener('click', ()=>document.getElementById('imageInput').click());
+document.getElementById('imageInput').addEventListener('change', e=>{
   const file = e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = async () => {
+  reader.onload = ()=> {
     const img = new Image();
     img.src = reader.result;
-    img.onload = () => {
+    img.onload = ()=> {
       try {
-        const luminanceSource = new ZXing.HTMLCanvasElementLuminanceSource(img);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img,0,0,img.width,img.height);
+        const luminanceSource = new ZXing.HTMLCanvasElementLuminanceSource(canvas);
         const binaryBitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(luminanceSource));
         const result = codeReader.decode(binaryBitmap);
         handleScan(result.text);
