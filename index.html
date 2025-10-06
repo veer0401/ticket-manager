@@ -329,7 +329,6 @@ nav {
     <div class="card-header">
       <h2 class="card-title">QR Code Scanner</h2>
       <div class="camera-controls">
-        <button class="camera-btn" id="switchCamera">Switch Camera</button>
         <button class="camera-btn" id="stopCamera">Stop Camera</button>
       </div>
     </div>
@@ -364,28 +363,22 @@ nav {
 <script>
 const resultDiv = document.getElementById('result');
 let html5QrCode;
-let currentCameraId = null;
-let cameras = [];
 
-// Initialize the scanner
-function initScanner(cameraId = null) {
-  // Clear old scanner if running
+// Initialize scanner with back camera
+function initScanner() {
   if (html5QrCode) {
     html5QrCode.stop().catch(err => console.log("Stop error:", err));
   }
 
   html5QrCode = new Html5Qrcode("reader");
-
   const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
   html5QrCode.start(
-    cameraId || { facingMode: "environment" },
+    { facingMode: "environment" }, // Always use back camera
     config,
     onScanSuccess,
     onScanFailure
-  ).then(() => {
-    currentCameraId = cameraId;
-  }).catch(err => {
+  ).catch(err => {
     console.error("Start failed:", err);
     resultDiv.textContent = "⚠️ Unable to access camera";
     resultDiv.className = "result result-error";
@@ -396,7 +389,6 @@ function onScanSuccess(decodedText, decodedResult) {
   const result = markTicket(decodedText);
   resultDiv.textContent = result.message;
   resultDiv.className = `result result-${result.type}`;
-  
   updateStats();
   
   setTimeout(() => {
@@ -406,7 +398,7 @@ function onScanSuccess(decodedText, decodedResult) {
 }
 
 function onScanFailure(error) {
-  // Optional: you can log or ignore scan failures
+  // Optional logging
 }
 
 function markTicket(id) {
@@ -434,50 +426,18 @@ function updateStats() {
   document.getElementById('remainingTickets').textContent = remaining;
 }
 
-function getCameras() {
-  Html5Qrcode.getCameras().then(devices => {
-    if (devices && devices.length) {
-      cameras = devices;
-      currentCameraId = devices[0].id;
-      initScanner(currentCameraId);
-    } else {
-      resultDiv.textContent = "⚠️ No cameras found";
-      resultDiv.className = "result result-error";
-    }
-  }).catch(err => {
-    console.log("Error getting cameras:", err);
-  });
-}
-
-function switchCamera() {
-  if (cameras.length < 2) {
-    alert("Only one camera available");
-    return;
-  }
-  
-  const currentIndex = cameras.findIndex(cam => cam.id === currentCameraId);
-  const nextIndex = (currentIndex + 1) % cameras.length;
-  currentCameraId = cameras[nextIndex].id;
-
-  html5QrCode.stop().then(() => initScanner(currentCameraId))
-    .catch(err => console.log("Error switching camera:", err));
-}
-
-function stopCamera() {
-  if (html5QrCode) {
-    html5QrCode.stop().then(() => {
-      resultDiv.textContent = "Camera stopped. Refresh page to restart.";
-      resultDiv.className = "result result-info";
-    }).catch(err => console.log("Error stopping camera:", err));
-  }
-}
-
 document.addEventListener('DOMContentLoaded', function() {
   updateStats();
-  getCameras();
+  initScanner();
 
-  document.getElementById('switchCamera').addEventListener('click', switchCamera);
-  document.getElementById('stopCamera').addEventListener('click', stopCamera);
+  document.getElementById('stopCamera').addEventListener('click', () => {
+    if (html5QrCode) {
+      html5QrCode.stop().then(() => {
+        resultDiv.textContent = "Camera stopped. Refresh page to restart.";
+        resultDiv.className = "result result-info";
+      }).catch(err => console.log("Error stopping camera:", err));
+    }
+  });
 });
 </script>
 
