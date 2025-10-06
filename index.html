@@ -4,50 +4,93 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ticket Scanner</title>
-<script type="module">
-  import { BrowserMultiFormatReader } from 'https://cdn.jsdelivr.net/npm/@zxing/library@0.19.0/esm/index.min.js';
-  window.ZXing = { BrowserMultiFormatReader };
-</script>
+<script src="https://unpkg.com/html5-qrcode@2.3.10/html5-qrcode.min.js"></script>
 <style>
 :root {
-  --primary: #6a1b9a; --primary-dark: #4a148c;
-  --secondary: #00bcd4; --secondary-dark: #008ba3;
-  --dark-bg: #121212; --dark-card: #252525;
-  --text-primary: #fff; --text-secondary: #b0b0b0;
-  --success: #4caf50; --error: #f44336;
+  --primary: #6a1b9a;
+  --secondary: #00bcd4;
+  --dark-bg: #121212;
+  --dark-card: #1e1e1e;
+  --text-primary: #fff;
+  --text-secondary: #b0b0b0;
+  --success: #4caf50;
+  --error: #f44336;
 }
-body { font-family:'Poppins',sans-serif; background:var(--dark-bg); color:var(--text-primary); margin:0; }
-.container { max-width: 900px; margin: 20px auto; padding: 10px; }
-header { text-align:center; margin-bottom:20px; }
-h1 { font-size:2rem; background:linear-gradient(90deg,var(--primary),var(--secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-.subtitle { color:var(--text-secondary); font-size:0.9rem; }
-.card { background:var(--dark-card); border-radius:12px; padding:20px; margin-bottom:20px; text-align:center; }
-video { width:100%; max-width:500px; border-radius:12px; }
-.controls { display:flex; justify-content:center; gap:10px; margin-top:10px; flex-wrap:wrap; }
-.btn { padding:10px 20px; border:none; border-radius:8px; background:var(--primary); color:#fff; cursor:pointer; }
-.btn:hover { background:var(--primary-dark); }
-.flash-btn { background:var(--secondary); }
-.flash-btn:hover { background:var(--secondary-dark); }
-.status { margin-top:10px; font-weight:500; }
-.status-success { color:var(--success);}
-.status-error { color:var(--error);}
-input[type=file]{display:none;}
+body {
+  margin: 0;
+  background: var(--dark-bg);
+  color: var(--text-primary);
+  font-family: 'Poppins', sans-serif;
+}
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+}
+h1 {
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.card {
+  background: var(--dark-card);
+  padding: 15px;
+  border-radius: 12px;
+  margin-top: 15px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+#reader {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.btn:hover {
+  background: #4a148c;
+}
+.flash-btn {
+  background: var(--secondary);
+}
+.status {
+  margin-top: 10px;
+  font-weight: 500;
+}
+.status-success { color: var(--success); }
+.status-error { color: var(--error); }
 </style>
 </head>
 <body>
+
 <div class="container">
-  <header>
-    <h1>🎟️ Ticket Scanner</h1>
-    <p class="subtitle">Scan tickets via camera or upload QR image</p>
-  </header>
+  <h1>🎟️ Ticket Scanner</h1>
+  <p style="color:var(--text-secondary)">Fast QR scanning with flash & camera toggle</p>
 
   <div class="card">
-    <video id="video" autoplay playsinline></video>
+    <div id="reader"></div>
+
     <div class="controls">
-      <button class="btn flash-btn" id="toggleFlash">Toggle Flashlight</button>
-      <button class="btn" id="scanImageBtn">Scan QR Image</button>
-      <input type="file" id="imageInput" accept="image/*">
+      <button class="btn flash-btn" id="flashToggle">💡 Toggle Flash</button>
+      <button class="btn" id="switchCamera">📷 Switch Camera</button>
+      <button class="btn" id="uploadQR">🖼️ Upload QR</button>
+      <input type="file" id="fileInput" accept="image/*" style="display:none;">
     </div>
+
     <div id="status" class="status">Ready to scan...</div>
   </div>
 </div>
@@ -55,90 +98,104 @@ input[type=file]{display:none;}
 <audio id="successSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
 <audio id="errorSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 
-<script type="module">
-const { BrowserMultiFormatReader } = window.ZXing;
-const codeReader = new BrowserMultiFormatReader();
-const video = document.getElementById('video');
-const statusEl = document.getElementById('status');
-const successSound = document.getElementById('successSound');
-const errorSound = document.getElementById('errorSound');
-let torchOn = false;
-let currentStream = null;
+<script>
+const html5QrCode = new Html5Qrcode("reader");
+let currentCamera = "environment";
+let torchEnabled = false;
+const statusEl = document.getElementById("status");
+const successSound = document.getElementById("successSound");
+const errorSound = document.getElementById("errorSound");
 
-async function startCamera() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    video.srcObject = stream;
-    currentStream = stream;
-    codeReader.decodeFromVideoDevice(null, video, (result, err) => {
-      if(result) handleScan(result.text);
-    });
-  } catch(e) {
-    console.error(e);
-    statusEl.textContent = "Camera not available or permission denied.";
+// ✅ Load existing tickets
+let tickets = JSON.parse(localStorage.getItem("tickets")) || [];
+
+// 🔹 Start scanning
+async function startScanner() {
+  const devices = await Html5Qrcode.getCameras();
+  const cameraId = devices.find(d => d.label.toLowerCase().includes(currentCamera))?.id || devices[0]?.id;
+
+  if (!cameraId) {
+    statusEl.textContent = "No camera found!";
+    return;
+  }
+
+  await html5QrCode.start(
+    cameraId,
+    {
+      fps: 30,
+      qrbox: { width: 300, height: 300 },
+      aspectRatio: 1.0
+    },
+    (decodedText) => handleScan(decodedText),
+    (err) => {}
+  );
+}
+
+function handleScan(qrText) {
+  if (!qrText) return;
+  const ticket = tickets.find(t => t.id === qrText);
+
+  if (ticket) {
+    if (ticket.used) {
+      showStatus("⚠️ Ticket already used!", false);
+    } else {
+      ticket.used = true;
+      localStorage.setItem("tickets", JSON.stringify(tickets));
+      showStatus("✅ Ticket valid! Entry allowed.", true);
+      vibrate(100);
+    }
+  } else {
+    showStatus("❌ Ticket not found!", false);
   }
 }
 
-startCamera();
-
-function handleScan(qrText) {
-  const tickets = JSON.parse(localStorage.getItem('tickets')) || [];
-  const ticket = tickets.find(t => t.id === qrText);
-  if(ticket){
-    if(ticket.used) showStatus('Ticket already used!', false);
-    else {
-      ticket.used = true;
-      localStorage.setItem('tickets', JSON.stringify(tickets));
-      showStatus('✅ Ticket valid! Entry allowed.', true);
-      vibrate(100);
-    }
-  } else showStatus('❌ Ticket not found!', false);
-}
-
-function showStatus(msg, success){
+function showStatus(msg, success) {
   statusEl.textContent = msg;
-  statusEl.className = success ? 'status status-success' : 'status status-error';
+  statusEl.className = success ? "status status-success" : "status status-error";
   (success ? successSound : errorSound).play();
 }
 
-function vibrate(ms){ if(navigator.vibrate) navigator.vibrate(ms); }
+function vibrate(ms) {
+  if (navigator.vibrate) navigator.vibrate(ms);
+}
 
-// Flashlight
-document.getElementById('toggleFlash').addEventListener('click', async ()=>{
-  if(!currentStream) return;
-  const track = currentStream.getVideoTracks()[0];
-  if(!track.getCapabilities().torch) { alert("Torch not supported"); return; }
-  torchOn = !torchOn;
-  await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+// 🔦 Flashlight Toggle
+document.getElementById("flashToggle").addEventListener("click", async () => {
+  try {
+    torchEnabled = !torchEnabled;
+    await html5QrCode.applyVideoConstraints({ advanced: [{ torch: torchEnabled }] });
+    showStatus(torchEnabled ? "🔦 Flashlight ON" : "💡 Flashlight OFF", true);
+  } catch {
+    showStatus("⚠️ Torch not supported on this device.", false);
+  }
 });
 
-// Scan QR from image
-document.getElementById('scanImageBtn').addEventListener('click', ()=>document.getElementById('imageInput').click());
-document.getElementById('imageInput').addEventListener('change', e=>{
+// 📷 Switch Camera
+document.getElementById("switchCamera").addEventListener("click", async () => {
+  try {
+    await html5QrCode.stop();
+    currentCamera = currentCamera === "environment" ? "user" : "environment";
+    startScanner();
+  } catch (e) {
+    showStatus("Error switching camera!", false);
+  }
+});
+
+// 🖼️ Upload QR Image
+document.getElementById("uploadQR").addEventListener("click", () => document.getElementById("fileInput").click());
+document.getElementById("fileInput").addEventListener("change", (e) => {
+  if (e.target.files.length === 0) return;
   const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = ()=> {
-    const img = new Image();
-    img.src = reader.result;
-    img.onload = ()=> {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img,0,0,img.width,img.height);
-        const luminanceSource = new ZXing.HTMLCanvasElementLuminanceSource(canvas);
-        const binaryBitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(luminanceSource));
-        const result = codeReader.decode(binaryBitmap);
-        handleScan(result.text);
-      } catch(err){
-        showStatus('❌ Unable to detect QR!', false);
-      }
-    };
-  };
-  reader.readAsDataURL(file);
+  html5QrCode.scanFile(file, true)
+    .then(decodedText => handleScan(decodedText))
+    .catch(() => showStatus("❌ Could not decode QR image!", false));
 });
+
+// 🚀 Start Camera automatically
+startScanner();
 </script>
 </body>
 </html>
+
+
+
