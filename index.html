@@ -3,219 +3,131 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QR Ticket Scanner</title>
+<title>Fast QR Scanner</title>
 <style>
 :root {
-  --primary: #6a1b9a;
-  --primary-dark: #4a148c;
-  --dark-bg: #121212;
-  --dark-card: #1e1e1e;
-  --text-primary: #ffffff;
-  --text-secondary: #b0b0b0;
-  --success: #4caf50;
-  --error: #f44336;
+  --primary:#6a1b9a; --secondary:#00bcd4;
+  --dark-bg:#121212; --dark-card:#252525; --text-primary:#fff;
+  --text-secondary:#b0b0b0; --success:#4caf50; --error:#f44336; --info:#2196f3;
 }
-
-body {
-  font-family: 'Poppins', sans-serif;
-  margin: 0;
-  padding: 0;
-  background: var(--dark-bg);
-  color: var(--text-primary);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
-}
-
-header {
-  text-align: center;
-  padding: 20px 0 10px;
-}
-
-h1 {
-  font-size: 2rem;
-  background: linear-gradient(90deg, var(--primary), #00bcd4);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-#scanner-container {
-  position: relative;
-  width: 100%;
-  max-width: 500px;
-  border-radius: 12px;
-  overflow: hidden;
-  margin: 10px 0;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-}
-
-video {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-#overlay {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  border: 4px solid rgba(0,255,0,0.5);
-  border-radius: 12px;
-  pointer-events: none;
-  display: none;
-  box-sizing: border-box;
-}
-
-.status {
-  margin-top: 15px;
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-weight: bold;
-  text-align: center;
-  width: 90%;
-  max-width: 500px;
-}
-
-.status-success { background: rgba(76,175,80,0.2); color: var(--success);}
-.status-error { background: rgba(244,67,54,0.2); color: var(--error);}
-.status-info { background: rgba(33,150,243,0.2); color: #2196f3;}
-
-#ticket-list {
-  margin-top: 20px;
-  width: 90%;
-  max-width: 500px;
-  background: var(--dark-card);
-  border-radius: 12px;
-  padding: 15px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-#ticket-list h3 {
-  margin-bottom: 10px;
-  font-size: 1.2rem;
-  color: var(--text-secondary);
-}
-
-#ticket-list ul {
-  list-style: none;
-  padding-left: 0;
-}
-
-#ticket-list li {
-  padding: 5px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
+body{margin:0;font-family:Poppins,sans-serif;background:var(--dark-bg);color:var(--text-primary);}
+.container{max-width:480px;margin:20px auto;}
+header{text-align:center;margin-bottom:20px;}
+h1{background:linear-gradient(90deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.scanner-card{background:var(--dark-card);border-radius:12px;padding:10px;text-align:center;position:relative;}
+#video{width:100%;border-radius:12px;}
+#overlay{position:absolute;top:0;left:0;width:100%;height:100%;border:4px solid var(--secondary);border-radius:12px;box-shadow:0 0 20px var(--secondary);pointer-events:none;}
+.status{margin-top:10px;font-weight:bold;padding:8px;border-radius:8px;text-align:center;}
+.status-info{background:rgba(33,150,243,0.2);color:var(--info);border:1px solid rgba(33,150,243,0.3);}
+.status-success{background:rgba(76,175,80,0.2);color:var(--success);border:1px solid rgba(76,175,80,0.3);}
+.status-error{background:rgba(244,67,54,0.2);color:var(--error);border:1px solid rgba(244,67,54,0.3);}
+.stats{display:flex;justify-content:space-around;margin-top:15px;}
+.stat-card{background:var(--dark-card);padding:8px 10px;border-radius:8px;text-align:center;}
+.stat-value{font-size:1.4rem;background:linear-gradient(90deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 </style>
 </head>
 <body>
 
-<header>
-  <h1>🎟️ QR Ticket Scanner</h1>
-  <p style="color: var(--text-secondary);">Scan tickets quickly and mark them as used</p>
-</header>
+<div class="container">
+  <header>
+    <h1>🎟️ Fast Ticket Scanner</h1>
+    <p style="color:var(--text-secondary)">Scan tickets instantly</p>
+  </header>
 
-<div id="scanner-container">
-  <video id="video" autoplay muted playsinline></video>
-  <div id="overlay"></div>
+  <div class="scanner-card">
+    <video id="video" autoplay muted playsinline></video>
+    <div id="overlay"></div>
+    <div id="status" class="status status-info">Scanning...</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-value" id="totalTickets">0</div>
+      <div style="color:var(--text-secondary)">Total Tickets</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="scannedTickets">0</div>
+      <div style="color:var(--text-secondary)">Scanned</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="remainingTickets">0</div>
+      <div style="color:var(--text-secondary)">Remaining</div>
+    </div>
+  </div>
 </div>
-
-<div id="status" class="status status-info">Scanning...</div>
-
-<div id="ticket-list">
-  <h3>Scanned Tickets</h3>
-  <ul id="ticketsUL"></ul>
-</div>
-
-<!-- Audio feedback -->
-<audio id="successSound" src="https://assets.mixkit.co/sfx/preview/mixkit-positive-notification-951.mp3"></audio>
-<audio id="errorSound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3"></audio>
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
 <script>
-const video = document.getElementById('video');
-const overlay = document.getElementById('overlay');
-const statusDiv = document.getElementById('status');
-const ticketsUL = document.getElementById('ticketsUL');
-const successSound = document.getElementById('successSound');
-const errorSound = document.getElementById('errorSound');
+// Audio Feedback
+const successAudio=new Audio('https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg');
+const errorAudio=new Audio('https://actions.google.com/sounds/v1/cartoon/boing.ogg');
 
-let scanning = true;
-let tickets = JSON.parse(localStorage.getItem('tickets')) || [];
+// Tickets from localStorage
+let tickets=JSON.parse(localStorage.getItem('tickets'))||[];
+updateStats();
 
-// Render previously scanned tickets
-function renderTickets() {
-  ticketsUL.innerHTML = '';
-  tickets.forEach(t => {
-    const li = document.createElement('li');
-    li.textContent = `${t.id} - ${t.used ? 'Used' : 'Unused'}`;
-    ticketsUL.appendChild(li);
-  });
-}
-renderTickets();
+const video=document.getElementById('video');
+const statusDiv=document.getElementById('status');
+let scanning=true;
 
-// Initialize camera
-navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-.then(stream => { video.srcObject = stream; video.setAttribute("playsinline", true); video.play(); requestAnimationFrame(scan); })
-.catch(err => { statusDiv.textContent = "Camera access denied!"; statusDiv.className="status status-error"; });
+// Start camera
+navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}}})
+.then(stream=>{video.srcObject=stream; video.play(); requestAnimationFrame(scanQR);})
+.catch(()=>{statusDiv.textContent="Camera access denied!"; statusDiv.className="status status-error";});
 
-function scan() {
-  if(!scanning) return;
+// Optimized QR scanning
+function scanQR(){
+  if(!scanning){ requestAnimationFrame(scanQR); return; }
+  if(video.readyState!==video.HAVE_ENOUGH_DATA){ requestAnimationFrame(scanQR); return; }
 
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video,0,0,canvas.width,canvas.height);
-  const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
-  const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+  // Low-res central crop for speed
+  const canvas=document.createElement('canvas');
+  const width=200, height=200;
+  canvas.width=width; canvas.height=height;
+  const ctx=canvas.getContext('2d');
+  const sx=(video.videoWidth-width)/2, sy=(video.videoHeight-height)/2;
+  ctx.drawImage(video,sx,sy,width,height,0,0,width,height);
+  const imageData=ctx.getImageData(0,0,width,height);
+  const code=jsQR(imageData.data,width,height,{inversionAttempts:"dontInvert"});
 
   if(code){
-    const ticketID = code.data.trim();
-    const existingTicket = tickets.find(t => t.id === ticketID);
-    
-    if(existingTicket && existingTicket.used) {
-      // Already used
-      showError(`Ticket ${ticketID} already used!`);
-    } else {
-      // New or unused ticket
-      if(existingTicket) {
-        existingTicket.used = true;
-      } else {
-        tickets.push({id: ticketID, used:true});
-      }
-      localStorage.setItem('tickets', JSON.stringify(tickets));
-      renderTickets();
-      showSuccess(`Ticket ${ticketID} ✅`);
+    const id=code.data.trim();
+    const existing=tickets.find(t=>t.id===id);
+    if(existing && existing.used){ showError(`Ticket ${id} already used!`); }
+    else{
+      if(existing) existing.used=true;
+      else tickets.push({id:id, used:true});
+      localStorage.setItem('tickets',JSON.stringify(tickets));
+      showSuccess(`Ticket ${id} ✅`);
     }
-  } else {
-    requestAnimationFrame(scan);
-  }
+  } else { requestAnimationFrame(scanQR); }
 }
 
-// Success feedback
+// Handlers
 function showSuccess(msg){
-  scanning = false;
-  overlay.style.display='block';
-  overlay.style.border='4px solid lime';
-  statusDiv.textContent = msg;
-  statusDiv.className='status status-success';
-  successSound.play();
-  if(navigator.vibrate) navigator.vibrate([200,100,200]);
-  setTimeout(()=>{ scanning=true; overlay.style.display='none'; statusDiv.textContent="Scanning..."; statusDiv.className='status status-info'; requestAnimationFrame(scan); }, 1500);
+  scanning=false;
+  statusDiv.textContent=msg; statusDiv.className='status status-success';
+  if(navigator.vibrate) navigator.vibrate([100,50,100]);
+  successAudio.play();
+  setTimeout(()=>{ scanning=true; statusDiv.textContent="Scanning..."; statusDiv.className='status status-info'; updateStats(); requestAnimationFrame(scanQR); },500);
 }
 
-// Error feedback
 function showError(msg){
-  scanning = false;
-  overlay.style.display='block';
-  overlay.style.border='4px solid red';
-  statusDiv.textContent = msg;
-  statusDiv.className='status status-error';
-  errorSound.play();
-  if(navigator.vibrate) navigator.vibrate([300,100,100]);
-  setTimeout(()=>{ scanning=true; overlay.style.display='none'; statusDiv.textContent="Scanning..."; statusDiv.className='status status-info'; requestAnimationFrame(scan); }, 1500);
+  scanning=false;
+  statusDiv.textContent=msg; statusDiv.className='status status-error';
+  if(navigator.vibrate) navigator.vibrate([200,50,50]);
+  errorAudio.play();
+  setTimeout(()=>{ scanning=true; statusDiv.textContent="Scanning..."; statusDiv.className='status status-info'; requestAnimationFrame(scanQR); },500);
+}
+
+// Stats
+function updateStats(){
+  const total=tickets.length;
+  const scanned=tickets.filter(t=>t.used).length;
+  const remaining=total-scanned;
+  document.getElementById('totalTickets').textContent=total;
+  document.getElementById('scannedTickets').textContent=scanned;
+  document.getElementById('remainingTickets').textContent=remaining;
 }
 </script>
 
