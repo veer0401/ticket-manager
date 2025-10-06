@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tech Ticket System - Generator</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.7.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<style>
+/* ---- same CSS as your provided file ---- */
+:root {
+  --primary: #6a1b9a;
+  --primary-dark: #4a148c;
+  --secondary: #00bcd4;
+  --secondary-dark: #008ba3;
+  --dark-bg: #121212;
+  --dark-surface: #1e1e1e;
+  --dark-card: #252525;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --success: #4caf50;
+  --error: #f44336;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--dark-bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+header { text-align: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; }
+h1 {
+  font-size: 2.5rem;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.subtitle { color: var(--text-secondary); margin-bottom: 20px; }
+nav { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+.nav-btn {
+  background: var(--dark-card); color: var(--text-primary);
+  padding: 10px 20px; border-radius: 8px; text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.1); transition: all .3s ease;
+}
+.nav-btn:hover, .nav-btn.active { background: var(--primary); }
+.card {
+  background: var(--dark-card); border-radius: 12px;
+  padding: 25px; margin-bottom: 25px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+.card-header { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; margin-bottom:20px;}
+.card-title { font-size:1.5rem; }
+.ticket-form { display: flex; flex-wrap: wrap; gap: 15px; align-items: end; margin-bottom: 20px; }
+.form-group { flex: 1; min-width: 180px; }
+label { display:block; margin-bottom:6px; color:var(--text-secondary);}
+input { width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:var(--dark-surface); color:var(--text-primary);}
+.btn {
+  padding:10px 20px; border:none; border-radius:8px; background:var(--primary);
+  color:#fff; cursor:pointer; transition:all .3s ease;
+}
+.btn:hover { background:var(--primary-dark);}
+.btn-secondary { background:var(--secondary);}
+.btn-danger { background:var(--error);}
+.btn-group { display:flex; gap:10px; flex-wrap:wrap; }
+.table-container { overflow-x:auto; border:1px solid rgba(255,255,255,0.1); border-radius:8px;}
+table { width:100%; border-collapse:collapse;}
+th, td { padding:12px; border-bottom:1px solid rgba(255,255,255,0.1);}
+th { background:var(--dark-card); text-align:left;}
+.qr-preview { display:flex; flex-wrap:wrap; gap:10px; justify-content:center;}
+.qr-card { background:var(--dark-surface); border-radius:8px; padding:10px; text-align:center;}
+.qr-label { font-size:0.8rem; color:var(--text-secondary); word-break:break-all;}
+.spinner {
+  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center; flex-direction:column;
+}
+.spinner-content { background:var(--dark-card); padding:25px; border-radius:12px; text-align:center; }
+.loader {
+  border:6px solid rgba(255,255,255,0.1);
+  border-top:6px solid var(--secondary);
+  border-radius:50%; width:50px; height:50px;
+  animation:spin 1s linear infinite; margin:0 auto 10px;
+}
+@keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+.status { text-align:center; margin-top:10px; font-weight:500; }
+.status-success { color:var(--success);}
+.status-error { color:var(--error);}
+.status-badge { padding:4px 10px; border-radius:20px; font-size:0.8rem; }
+.status-not-scanned { background:rgba(244,67,54,0.2); color:var(--error);}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🎟️ Tech Ticket System</h1>
+    <p class="subtitle">Modern QR-based ticket management with real-time scanning</p>
+    <nav>
+      <a href="index.html" class="nav-btn">📷 Scan Tickets</a>
+      <a href="ticket_generator.html" class="nav-btn active">🎟️ Generate Tickets</a>
+      <a href="upload_tickets.html" class="nav-btn">📤 Upload CSV</a>
+      <a href="entries.html" class="nav-btn">📊 Entry Dashboard</a>
+    </nav>
+  </header>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Ticket Generator</h2>
+    </div>
+
+    <div class="ticket-form">
+      <div class="form-group">
+        <label>Ticket Prefix</label>
+        <input type="text" id="prefix" placeholder="EVENT">
+      </div>
+      <div class="form-group">
+        <label>Event Name</label>
+        <input type="text" id="eventName" placeholder="Optional">
+      </div>
+      <div class="form-group">
+        <label>Number of Tickets</label>
+        <input type="number" id="count" min="1" max="5000" placeholder="1-5000">
+      </div>
+      <button class="btn" onclick="generateTickets()">Generate</button>
+      <button class="btn btn-danger" onclick="clearTickets()">Clear All</button>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-secondary" onclick="exportCSV()">📄 Export CSV</button>
+      <button class="btn btn-secondary" onclick="exportZIP()">📦 Export ZIP</button>
+    </div>
+    <div id="status" class="status"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">Generated Tickets</h2></div>
+    <div class="table-container">
+      <table>
+        <thead><tr><th>Ticket ID</th><th>Event</th><th>Timestamp</th><th>Status</th></tr></thead>
+        <tbody id="ticketTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">QR Preview (First 20)</h2></div>
+    <div id="qrPreview" class="qr-preview"></div>
+  </div>
+</div>
+
+<div id="spinner" class="spinner">
+  <div class="spinner-content">
+    <div class="loader"></div>
+    <p>Exporting tickets, please wait...</p>
+  </div>
+</div>
+
+<script>
+const BATCH_SIZE = 100;
+
+async function generateTickets() {
+  const prefix = document.getElementById("prefix").value.trim() || "TICKET";
+  const eventName = document.getElementById("eventName").value.trim();
+  const count = parseInt(document.getElementById("count").value);
+  const status = document.getElementById("status");
+  const table = document.getElementById("ticketTable");
+  const now = new Date().toLocaleString();
+
+  if (!count || count < 1) {
+    status.textContent = "Please enter valid ticket count.";
+    status.className = "status status-error";
+    return;
+  }
+
+  let tickets = JSON.parse(localStorage.getItem("tickets")) || [];
+  const totalBatches = Math.ceil(count / BATCH_SIZE);
+  table.innerHTML = "";
+
+  for (let b = 0; b < totalBatches; b++) {
+    const start = b * BATCH_SIZE;
+    const end = Math.min(start + BATCH_SIZE, count);
+
+    for (let i = start; i < end; i++) {
+      const id = `${prefix}-${Date.now()}-${i + 1}`;
+      const ticket = { id, eventName, timestamp: now, used: false };
+      tickets.push(ticket);
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${ticket.id}</td>
+        <td>${ticket.eventName || "-"}</td>
+        <td>${ticket.timestamp}</td>
+        <td><span class="status-badge status-not-scanned">❌ Not Scanned</span></td>`;
+      table.appendChild(tr);
+    }
+
+    status.textContent = `Generated batch ${b + 1}/${totalBatches}`;
+    status.className = "status status-success";
+    await new Promise(r => setTimeout(r, 20));
+  }
+
+  localStorage.setItem("tickets", JSON.stringify(tickets));
+  status.textContent = `${count} tickets generated successfully!`;
+  status.className = "status status-success";
+  showQRPreview(tickets);
+}
+
+function showQRPreview(tickets) {
+  const preview = document.getElementById("qrPreview");
+  preview.innerHTML = "";
+  tickets.slice(0, 20).forEach(t => {
+    const card = document.createElement("div");
+    card.className = "qr-card";
+    const div = document.createElement("div");
+    new QRCode(div, { text: t.id, width: 100, height: 100 });
+    const label = document.createElement("div");
+    label.className = "qr-label";
+    label.textContent = t.id;
+    card.appendChild(div);
+    card.appendChild(label);
+    preview.appendChild(card);
+  });
+}
+
+function clearTickets() {
+  if (confirm("Clear all generated tickets?")) {
+    localStorage.removeItem("tickets");
+    document.getElementById("ticketTable").innerHTML = "";
+    document.getElementById("qrPreview").innerHTML = "";
+    const status = document.getElementById("status");
+    status.textContent = "All tickets cleared!";
+    status.className = "status status-success";
+  }
+}
+
+function exportCSV() {
+  const tickets = JSON.parse(localStorage.getItem("tickets")) || [];
+  if (!tickets.length) return alert("No tickets to export.");
+
+  let csv = "Ticket ID,Event Name,Timestamp,Used\n";
+  tickets.forEach(t => {
+    csv += `${t.id},${t.eventName || ""},${t.timestamp},${t.used}\n`;
+  });
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  saveAs(blob, "tickets.csv");
+}
+
+async function exportZIP() {
+  const tickets = JSON.parse(localStorage.getItem("tickets")) || [];
+  if (!tickets.length) return alert("No tickets to export.");
+
+  const spinner = document.getElementById("spinner");
+  spinner.style.display = "flex";
+  const zip = new JSZip();
+  const totalBatches = Math.ceil(tickets.length / BATCH_SIZE);
+
+  const base64ToBytes = b64 => {
+    const binary = atob(b64);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  };
+
+  for (let b = 0; b < totalBatches; b++) {
+    const folder = zip.folder(`batch_${b + 1}`);
+    const start = b * BATCH_SIZE;
+    const end = Math.min(start + BATCH_SIZE, tickets.length);
+
+    for (let i = start; i < end; i++) {
+      const t = tickets[i];
+      const qrDiv = document.createElement("div");
+      new QRCode(qrDiv, { text: t.id, width: 300, height: 300 });
+      await new Promise(r => setTimeout(r, 10));
+
+      const canvas = qrDiv.querySelector("canvas");
+      if (!canvas) continue;
+
+      const dataURL = canvas.toDataURL("image/png");
+      const base64 = dataURL.split(",")[1];
+      const safeName = t.id.replace(/[^a-zA-Z0-9-_]/g, "_") + ".png";
+      folder.file(safeName, base64ToBytes(base64), { binary: true });
+    }
+  }
+
+  const blob = await zip.generateAsync({ type: "blob" });
+  saveAs(blob, "tickets_qr_batches.zip");
+  spinner.style.display = "none";
+  document.getElementById("status").textContent = "ZIP export completed!";
+  document.getElementById("status").className = "status status-success";
+}
+</script>
+</body>
+</html>
