@@ -3,101 +3,176 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ticket Scanner - Optimized</title>
+<title>Ticket Manager - Scanner</title>
+<script type="module">
+  import { BrowserMultiFormatReader, NotFoundException } from 'https://cdn.jsdelivr.net/npm/@zxing/library@0.19.0/esm/index.min.js';
+
+  window.ZXing = { BrowserMultiFormatReader, NotFoundException };
+</script>
 <style>
 :root {
-  --primary:#6a1b9a; --primary-dark:#4a148c;
-  --dark-bg:#121212; --dark-card:#252525; --text-primary:#fff;
-  --success:#4caf50; --error:#f44336;
+  --primary: #6a1b9a;
+  --primary-dark: #4a148c;
+  --secondary: #00bcd4;
+  --secondary-dark: #008ba3;
+  --dark-bg: #121212;
+  --dark-surface: #1e1e1e;
+  --dark-card: #252525;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --success: #4caf50;
+  --error: #f44336;
 }
-body{margin:0;padding:0;font-family:'Poppins',sans-serif;background:var(--dark-bg);color:var(--text-primary);}
-.container{max-width:600px;margin:20px auto;padding:10px;}
-header{text-align:center;margin-bottom:20px;}
-h1{font-size:2rem;color:var(--primary);}
-video{width:100%;border-radius:12px;background:#000;}
-.btn{padding:10px 20px;border:none;border-radius:8px;background:var(--primary);color:#fff;cursor:pointer;margin:5px;}
-.status{margin-top:10px;font-weight:500;text-align:center;}
-.status-success{color:var(--success);}
-.status-error{color:var(--error);}
-.controls{display:flex;justify-content:center;gap:10px;margin-top:10px;}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Poppins',sans-serif; background:var(--dark-bg); color:var(--text-primary); min-height:100vh; }
+.container { max-width: 900px; margin: 0 auto; padding: 20px; }
+header { text-align:center; margin-bottom:20px; }
+h1 { font-size:2rem; background: linear-gradient(90deg,var(--primary),var(--secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.subtitle { color:var(--text-secondary); font-size:0.9rem; margin-bottom:20px; }
+.nav-btn { display:inline-block; margin:5px; padding:10px 20px; border-radius:8px; background:var(--dark-card); color:var(--text-primary); text-decoration:none; }
+.nav-btn.active { background:var(--primary); }
+
+.card { background:var(--dark-card); border-radius:12px; padding:20px; margin-bottom:20px; }
+.card-header { margin-bottom:15px; font-size:1.2rem; font-weight:600; }
+.video-container { position: relative; width:100%; max-width:500px; margin:0 auto; }
+#video { width:100%; border-radius:12px; }
+.controls { display:flex; justify-content:space-between; margin-top:10px; }
+.btn { padding:10px 20px; border:none; border-radius:8px; background:var(--primary); color:#fff; cursor:pointer; }
+.btn:hover { background:var(--primary-dark); }
+.status { margin-top:10px; text-align:center; font-weight:500; }
+.status-success { color:var(--success);}
+.status-error { color:var(--error);}
+input[type=file] { display:none; }
+.flash-btn { background:var(--secondary); }
+.flash-btn:hover { background:var(--secondary-dark); }
 </style>
 </head>
 <body>
-
 <div class="container">
   <header>
-    <h1>🎫 Ticket Scanner</h1>
+    <h1>🎟️ Ticket Scanner</h1>
+    <p class="subtitle">Scan tickets via camera or upload QR image</p>
+    <nav>
+      <a href="index.html" class="nav-btn active">📷 Scan Tickets</a>
+      <a href="ticket_generator.html" class="nav-btn">🎟️ Generate Tickets</a>
+      <a href="upload_tickets.html" class="nav-btn">📤 Upload CSV</a>
+      <a href="entries.html" class="nav-btn">📊 Entry Dashboard</a>
+    </nav>
   </header>
 
-  <video id="camera" autoplay playsinline></video>
-  
-  <div class="controls">
-    <button class="btn" id="scanBtn">Scan Ticket</button>
-    <button class="btn" id="flashBtn">🔦 Toggle Flash</button>
+  <div class="card">
+    <div class="card-header">Live Camera Scanner</div>
+    <div class="video-container">
+      <video id="video" autoplay playsinline></video>
+    </div>
+    <div class="controls">
+      <button class="btn flash-btn" id="toggleFlash">Toggle Flashlight</button>
+      <button class="btn" id="scanImageBtn">Scan QR Image</button>
+      <input type="file" id="imageInput" accept="image/*">
+    </div>
+    <div id="status" class="status">Ready to scan...</div>
   </div>
-
-  <div id="status" class="status">Camera initializing...</div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-<script>
-let video = document.getElementById('camera');
-let canvas = document.createElement('canvas');
-let ctx = canvas.getContext('2d');
-let stream;
-let track;
+<audio id="successSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+<audio id="errorSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+
+<script type="module">
+const { BrowserMultiFormatReader, NotFoundException } = window.ZXing;
+const codeReader = new BrowserMultiFormatReader();
+const videoElement = document.getElementById('video');
+const statusEl = document.getElementById('status');
+const successSound = document.getElementById('successSound');
+const errorSound = document.getElementById('errorSound');
+let selectedDeviceId = null;
 let torchOn = false;
 
-// Initialize camera
-async function initCamera(){
-  try{
-    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
-    video.srcObject = stream;
-    track = stream.getVideoTracks()[0];
-    document.getElementById('status').textContent = 'Camera ready. Press "Scan Ticket"';
-  } catch(e){
-    document.getElementById('status').textContent = 'Camera access denied or not supported.';
-  }
-}
-initCamera();
-
-// Scan QR on button click
-document.getElementById('scanBtn').addEventListener('click', ()=>{
-  if(!stream) return;
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  ctx.drawImage(video,0,0,canvas.width,canvas.height);
-  const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
-  const code = jsQR(imageData.data, canvas.width, canvas.height);
-  
-  const status = document.getElementById('status');
-  if(code){
-    status.textContent = `Ticket Scanned: ${code.data}`;
-    status.className='status status-success';
-    navigator.vibrate?.(200);
-    new Audio('https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg').play();
-  } else {
-    status.textContent = 'No QR detected!';
-    status.className='status status-error';
-    navigator.vibrate?.([100,50,100]);
-    new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg').play();
-  }
+// Get cameras and start scanning
+navigator.mediaDevices.enumerateDevices().then(devices => {
+  const videoInput = devices.filter(d => d.kind === 'videoinput');
+  if(videoInput.length) selectedDeviceId = videoInput[0].deviceId;
+  startCamera();
 });
 
-// Toggle flashlight
-document.getElementById('flashBtn').addEventListener('click', async ()=>{
-  if(!track) return;
+async function startCamera() {
+  try {
+    await codeReader.decodeFromVideoDevice(selectedDeviceId, videoElement, (result, err) => {
+      if (result) {
+        handleScan(result.text);
+      }
+    });
+  } catch(e) {
+    console.error(e);
+    statusEl.textContent = "Camera access denied or not available.";
+  }
+}
+
+function handleScan(qrText) {
+  const tickets = JSON.parse(localStorage.getItem('tickets')) || [];
+  const ticket = tickets.find(t => t.id === qrText);
+  if(ticket) {
+    if(ticket.used){
+      showStatus('Ticket already used!', false);
+    } else {
+      ticket.used = true;
+      localStorage.setItem('tickets', JSON.stringify(tickets));
+      showStatus('✅ Ticket valid! Entry allowed.', true);
+      vibrate(100);
+    }
+  } else {
+    showStatus('❌ Ticket not found!', false);
+    vibrate(300);
+  }
+}
+
+function showStatus(msg, success){
+  statusEl.textContent = msg;
+  statusEl.className = success ? 'status status-success' : 'status status-error';
+  (success ? successSound : errorSound).play();
+}
+
+function vibrate(duration){
+  if(navigator.vibrate) navigator.vibrate(duration);
+}
+
+// Flashlight toggle
+document.getElementById('toggleFlash').addEventListener('click', async () => {
+  if(!videoElement.srcObject) return;
+  const track = videoElement.srcObject.getVideoTracks()[0];
   const capabilities = track.getCapabilities();
-  if(!capabilities.torch){
-    alert('Flash not supported on this device.');
+  if(!capabilities.torch) {
+    alert("Torch not supported on this device");
     return;
   }
   torchOn = !torchOn;
-  try{
-    await track.applyConstraints({advanced:[{torch:torchOn}]});
-  }catch(e){
-    console.log(e);
-  }
+  await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+});
+
+// Scan QR from image
+document.getElementById('scanImageBtn').addEventListener('click', () => {
+  document.getElementById('imageInput').click();
+});
+
+document.getElementById('imageInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const img = new Image();
+    img.src = reader.result;
+    img.onload = () => {
+      try {
+        const luminanceSource = new ZXing.HTMLCanvasElementLuminanceSource(img);
+        const binaryBitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(luminanceSource));
+        const result = codeReader.decode(binaryBitmap);
+        handleScan(result.text);
+      } catch(err){
+        showStatus('❌ Unable to detect QR!', false);
+      }
+    };
+  };
+  reader.readAsDataURL(file);
 });
 </script>
 </body>
